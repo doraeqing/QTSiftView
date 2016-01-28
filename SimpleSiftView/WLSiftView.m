@@ -56,27 +56,15 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
 }
 - (void)layoutSubviews {
     [super layoutSubviews];
-    CGFloat w = self.frame.size.width;
-    CGFloat x = self.frame.origin.x;
-    CGFloat y = self.frame.origin.y;
-    self.siftContent.frame = CGRectMake(x, y, w, self.frame.size.height);
-    self.backGroundView.frame = self.bounds;
-    self.siftTab.frame = CGRectMake(x, 0, w, self.frame.size.height);
+    self.siftTab.frame = CGRectMake(self.frame.origin.x, 0, self.frame.size.width, self.frame.size.height);
     if (_dataSourceHas.viewForContentAtIndex) {
-        NSInteger numberOfTabs = [self numberOfTabs];
+        NSInteger numberOfTabs = [self p_numberOfTabs];
         for (int i = 0; i < numberOfTabs; i++) {
             UIView *temp = [self.contentViewData objectForKey:@(i)]?:[_dataSource siftView:self viewForContentAtIndex:i];
             if (temp) {
-                temp.translatesAutoresizingMaskIntoConstraints = NO;
+                temp.frame = CGRectMake(0, 0, self.frame.size.width,[self heightOfContentAtIndex:i]);
                 [self.contentViewData setObject:temp forKey:@(i)];
                 [self.siftContent addSubview:temp];
-                NSDictionary *views = NSDictionaryOfVariableBindings(_siftContent,temp);
-                NSArray *horizontalCons = [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-0-[temp]-0-|"
-                                                                                  options:0 metrics:nil views:views];
-                [self.siftContent addConstraints:horizontalCons];
-                NSString *strCons = [NSString stringWithFormat:@"V:|-0-[temp(%lf)]-0-|",[self heightOfContentAtIndex:i]];
-                NSArray *heightCons = [NSLayoutConstraint constraintsWithVisualFormat:strCons options:0 metrics:nil views:views];
-                [self.siftContent addConstraints:heightCons];
             }
         }
     }
@@ -87,14 +75,14 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
 }
 
 #pragma mark - private
-- (NSInteger)numberOfTabs {
+- (NSInteger)p_numberOfTabs {
     if (_dataSourceHas.numberOfTabsInSitfView) {
         return [_dataSource numberOfTabsInSitfView:self];
     }else{
         return WYSiftViewNumberOfTabs;
     }
 }
-- (UICollectionViewCell *)cellForItemAtIndex:(NSInteger)index {
+- (UICollectionViewCell *)p_cellForItemAtIndex:(NSInteger)index {
     if (_dataSourceHas.itemForTabAtIndex) {
         [self.siftTab registerNib:[UINib nibWithNibName:@"WLSiftTabViewCell" bundle:nil] forCellWithReuseIdentifier:kWLSiftTabViewCell];
         WLSiftTabViewCell *cell = [self.siftTab dequeueReusableCellWithReuseIdentifier:kWLSiftTabViewCell forIndexPath:DT_IndexPathFromRow(index)];
@@ -108,8 +96,6 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
                 cell.siftTitle.textColor = [obj defaultTitleColor];
             }
             cell.siftTitle.text = [obj title];
-//            //为了业务逻辑
-//            cell.sepLab.hidden = (index < [self numberOfTabs] - 1) ? NO : YES;
         }
         return cell;
     }
@@ -117,10 +103,10 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
 }
 #pragma mark - UICollectionViewDataSource
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-    return [self numberOfTabs];
+    return [self p_numberOfTabs];
 }
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
-    return [self cellForItemAtIndex:indexPath.row];
+    return [self p_cellForItemAtIndex:indexPath.row];
 }
 #pragma mark - UICollectionViewDelegate
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
@@ -138,7 +124,7 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
 }
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath{
     
-    CGFloat width = self.siftTab.frame.size.width / [self numberOfTabs];
+    CGFloat width = self.siftTab.frame.size.width / [self p_numberOfTabs];
     CGSize temp= CGSizeMake(width, self.siftTab.frame.size.height);
     
     return temp;
@@ -197,14 +183,14 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
 
 - (void)hiddenSiftTab{
     
-    [UIView animateWithDuration:0.3 animations:^{
+    [UIView animateWithDuration:WYSiftViewDismissAnimateDefaultDuration animations:^{
         self.frame = CGRectMake(self.frame.origin.x,WYSV_SCREEN_HEIGHT - WYSiftViewNavStatusHeight, self.frame.size.width, self.frame.size.height);
         
     } completion:^(BOOL finished) {
     }];
 }
 - (void)showSiftTab {
-    [UIView animateWithDuration:0.3 animations:^{
+    [UIView animateWithDuration:WYSiftViewDismissAnimateDefaultDuration animations:^{
         self.frame = CGRectMake(self.frame.origin.x,WYSV_SCREEN_HEIGHT - self.frame.size.height - WYSiftViewNavStatusHeight, self.frame.size.width, self.frame.size.height);
     
     } completion:^(BOOL finished) {
@@ -236,27 +222,22 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
     }];
     UIView *temp = [self.contentViewData objectForKey:@(index)];
     temp.hidden = NO;
-    [UIView animateWithDuration:0.2
+    temp.frame = CGRectMake(0, 0, self.frame.size.width,WYSV_SCREEN_HEIGHT);
+    [UIView animateWithDuration:WYSiftViewShowAnimateDuration
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:5
+                        options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
                          self.backGroundView.alpha = 1.0;
-                          self.siftContent.frame = CGRectMake(self.frame.origin.x, WYSV_SCREEN_HEIGHT - height, self.frame.size.width, height);
+                         self.siftContent.frame = CGRectMake(self.frame.origin.x, WYSV_SCREEN_HEIGHT- height, self.frame.size.width, WYSV_SCREEN_HEIGHT);
                      } completion:^(BOOL finished) {
-//
-//                         [UIView animateWithDuration:0.5
-//                                               delay:0.0
-//                              usingSpringWithDamping:0.7
-//                               initialSpringVelocity:5
-//                                             options:UIViewAnimationOptionCurveEaseInOut
-//                                          animations:^{
-//                                              self.siftContent.frame = CGRectMake(self.frame.origin.x, WYSV_SCREEN_HEIGHT - height, self.frame.size.width, height);
-//                                          } completion:^(BOOL finished) {
-//                                              
-//                                          }];
+                         temp.frame = CGRectMake(0, 0, self.frame.size.width,height);
                      }];
 }
 - (void)dismissContentView {
     self.currentShownContent = NSIntegerMax;
-    [UIView animateWithDuration:0.2
+    [UIView animateWithDuration:WYSiftViewDismissAnimateDefaultDuration
                      animations:^{
                          self.siftContent.frame = CGRectMake(self.siftContent.frame.origin.x, WYSV_SCREEN_HEIGHT,self.siftContent.frame.size.width, self.siftContent.frame.size.height);;
                          self.backGroundView.alpha = 0.0;

@@ -11,6 +11,9 @@ extern const CGFloat WYSiftViewTabHeight;
 extern const CGFloat WYSiftViewContentHeight;
 extern const CGFloat WYSiftViewNavStatusHeight;
 extern const CGFloat WYSiftViewNumberOfTabs;
+extern const CGFloat WYSiftViewDefaultAnimateDuration;
+extern const CGFloat WYSiftViewShowAnimateDuration;
+extern const CGFloat WYSiftViewDismissAnimateDefaultDuration;
 
 #define WYSV_SCREEN_HEIGHT   [UIScreen mainScreen].bounds.size.height  
 

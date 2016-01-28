@@ -12,3 +12,7 @@ const CGFloat WYSiftViewTabHeight                  = 50.0f;
 const CGFloat WYSiftViewContentHeight              = 242.0f;
 const CGFloat WYSiftViewNavStatusHeight            = 64.0f;
 const CGFloat WYSiftViewNumberOfTabs               = 4;
+
+const CGFloat WYSiftViewDefaultAnimateDuration           = 0.3;
+const CGFloat WYSiftViewShowAnimateDuration              = 0.5;
+const CGFloat WYSiftViewDismissAnimateDefaultDuration    = 0.2;
