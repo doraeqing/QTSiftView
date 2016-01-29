@@ -22,7 +22,7 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
 @property (nonatomic, strong) UIControl *backGroundView;
 @property (nonatomic, weak)   UICollectionView *siftTab;
 @property (nonatomic, assign) NSInteger currentShownContent;
-@property (nonatomic, strong) NSMutableDictionary *contentViewData;
+@property (nonatomic, strong) NSMutableDictionary *availableContents;
 @end
 
 @implementation WLSiftView {
@@ -60,10 +60,10 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
     if (_dataSourceHas.viewForContentAtIndex) {
         NSInteger numberOfTabs = [self p_numberOfTabs];
         for (int i = 0; i < numberOfTabs; i++) {
-            UIView *temp = [self.contentViewData objectForKey:@(i)]?:[_dataSource siftView:self viewForContentAtIndex:i];
+            UIView *temp = [self.availableContents objectForKey:@(i)]?:[_dataSource siftView:self viewForContentAtIndex:i];
             if (temp) {
                 temp.frame = CGRectMake(0, 0, self.frame.size.width,[self heightOfContentAtIndex:i]);
-                [self.contentViewData setObject:temp forKey:@(i)];
+                [self.availableContents setObject:temp forKey:@(i)];
                 [self.siftContent addSubview:temp];
             }
         }
@@ -72,6 +72,11 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
 #pragma mark - public
 - (void)reloadData {
     [self.siftTab reloadData];
+    [[self.availableContents allValues] makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [self.availableContents removeAllObjects];
+    
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
 }
 
 #pragma mark - private
@@ -147,7 +152,6 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
 - (UIView *)siftContent {
     if (!_siftContent) {
         _siftContent = [[UIView alloc] initWithFrame:self.frame];
-        _siftContent.autoresizesSubviews = NO;
         _siftContent.backgroundColor = [UIColor clearColor];
     }
     return _siftContent;
@@ -171,11 +175,11 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
     _delegateHas.didSelectdTabAtIndex = [_delegate respondsToSelector:@selector(siftView:didSelectdTabAtIndex:)];
     _delegateHas.heightOfContentViewAtIndex = [_delegate respondsToSelector:@selector(siftView:heightOfContentViewAtIndex:)];
 }
-- (NSMutableDictionary *)contentViewData {
-    if (!_contentViewData) {
-        _contentViewData = [NSMutableDictionary dictionary];
+- (NSMutableDictionary *)availableContents {
+    if (!_availableContents) {
+        _availableContents = [NSMutableDictionary dictionary];
     }
-    return _contentViewData;
+    return _availableContents;
 }
 @end
 
@@ -217,10 +221,10 @@ static inline NSIndexPath *DT_IndexPathFromRow(NSInteger index){
     CGFloat height = [self heightOfContentAtIndex:index];
     self.currentShownContent = index;
     [self insertSubview];
-    [self.contentViewData enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, UIView * _Nonnull obj, BOOL * _Nonnull stop) {
+    [self.availableContents enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, UIView * _Nonnull obj, BOOL * _Nonnull stop) {
         obj.hidden = YES;
     }];
-    UIView *temp = [self.contentViewData objectForKey:@(index)];
+    UIView *temp = [self.availableContents objectForKey:@(index)];
     temp.hidden = NO;
     temp.frame = CGRectMake(0, 0, self.frame.size.width,WYSV_SCREEN_HEIGHT);
     [UIView animateWithDuration:WYSiftViewShowAnimateDuration
